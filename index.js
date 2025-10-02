@@ -3,7 +3,7 @@ import { OpenAIAgentsTraceProcessor } from "@braintrust/openai-agents";
 import { Agent, run, addTraceProcessor } from "@openai/agents";
 
 const logger = initLogger({
-  projectName: "Alex-Test-Project",
+  projectName: "OAI-Agents-Test-Project",
 });
 
 const goodProcessor = new OpenAIAgentsTraceProcessor({ logger });
