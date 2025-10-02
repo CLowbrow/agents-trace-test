@@ -12,6 +12,7 @@
   "dependencies": {
     "@braintrust/openai-agents": "^0.0.5",
     "@openai/agents": "^0.1.9",
-    "braintrust": "^0.4.0"
+    "braintrust": "^0.4.0",
+    "express": "^5.1.0"
   }
 }
