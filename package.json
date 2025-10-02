@@ -10,8 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@braintrust/openai-agents": "^0.0.2",
-    "@openai/agents": "^0.1.0",
-    "braintrust": "^0.3.6"
+    "@braintrust/openai-agents": "^0.0.5",
+    "@openai/agents": "^0.1.9",
+    "braintrust": "^0.4.0"
   }
 }
