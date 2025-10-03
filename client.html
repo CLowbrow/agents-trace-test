@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Agent Client</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #status {
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    #status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+    #status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #sendBtn {
+      background: #007bff;
+      color: white;
+    }
+    #resetBtn {
+      background: #6c757d;
+      color: white;
+    }
+    #messages {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      background: #f9f9f9;
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      background: white;
+    }
+    .message.user {
+      background: #e3f2fd;
+    }
+    .message.agent {
+      background: #f1f8e9;
+    }
+    .message .label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #666;
+    }
+    .message .content {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebSocket Agent Client</h1>
+
+  <div id="status" class="disconnected">Disconnected</div>
+
+  <div class="input-group">
+    <input type="text" id="messageInput" placeholder="Type your message..." disabled>
+    <button id="sendBtn" disabled>Send</button>
+    <button id="resetBtn" disabled>Reset</button>
+  </div>
+
+  <div id="messages"></div>
+
+  <script>
+    const status = document.getElementById('status');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const messagesDiv = document.getElementById('messages');
+
+    let ws = null;
+
+    function addMessage(content, type) {
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${type}`;
+      messageEl.innerHTML = `
+        <div class="label">${type}</div>
+        <div class="content">${content}</div>
+      `;
+      messagesDiv.appendChild(messageEl);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function connect() {
+      ws = new WebSocket('ws://localhost:3055');
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        status.textContent = 'Connected';
+        status.className = 'connected';
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        resetBtn.disabled = false;
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received:', data);
+
+        if (data.output) {
+          addMessage(data.output, 'agent');
+        }
+
+        if (data.status === 'conversation_reset') {
+          messagesDiv.innerHTML = '';
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        status.textContent = 'Disconnected';
+        status.className = 'disconnected';
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        resetBtn.disabled = true;
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    function sendMessage() {
+      const prompt = messageInput.value.trim();
+      if (!prompt || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      addMessage(prompt, 'user');
+      ws.send(JSON.stringify({ prompt }));
+      messageInput.value = '';
+    }
+
+    function resetConversation() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      console.log('Resetting conversation');
+      ws.send(JSON.stringify({ prompt: 'reset', reset: true }));
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    resetBtn.addEventListener('click', resetConversation);
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    // Connect on load
+    connect();
+  </script>
+</body>
+</html>
